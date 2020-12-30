@@ -1,61 +1,160 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-typescript" target="_blank" rel="noopener">typescript</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-pwa" target="_blank" rel="noopener">pwa</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-router" target="_blank" rel="noopener">router</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  <div class="fireworks">
+    <h1>New Year's Eve 2020</h1>
+    <svg id="fireworks-svg" @click="clickSvg"/>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+<script lang="js">
+import { Component, Vue } from 'vue-property-decorator';
+import { SVG } from "@svgdotjs/svg.js";
+import colors from "@/constants/colors";
+import settings from "@/constants/settings";
 
 @Component
-export default class HelloWorld extends Vue {
-  @Prop() private msg!: string;
+export default class Firework extends Vue {
+
+  mounted() {
+
+    const svg = SVG("#fireworks-svg")
+
+    const rockets = []
+
+    for (let i = 0; i < settings.rocketCount; i++) {
+      const x = Math.floor(Math.random() * svg.node.clientWidth) + 1
+      const y = svg.node.clientHeight - settings.stickHeight
+
+      rockets.push(this.createRocket(svg, x, y))
+    }
+
+    this.startExplosions(svg, rockets)
+
+  }
+
+  clickSvg(e) {
+    const svg = SVG("#fireworks-svg")
+    const rocket = this.createRocket(svg, e.clientX, svg.node.clientHeight - settings.stickHeight)
+    this.doRocketExplosion(svg, rocket, settings.baseDuration, 200)
+  }
+
+  startExplosions(svg, rockets) {
+    rockets.forEach((rocket, i) => {
+      const delay = settings.baseDuration / 10 * i
+      this.doRocketExplosion(svg, rocket, settings.baseDuration, delay)
+    })
+  }
+
+  doRocketExplosion(svg, rocket, duration, delay) {
+
+    const targetY = Math.floor(Math.random() * 200) + 1
+
+    rocket.animate({
+      duration: duration,
+      when: 'now',
+      swing: true,
+      delay: delay,
+    }).move(rocket.x(), 100 + targetY)
+
+    setTimeout(() => {
+      this.startExplosion(svg, rocket)
+      rocket.remove()
+    }, duration + delay)
+  }
+
+  createRocket(svg, x, y) {
+
+    const rocket = svg.group()
+
+    const stick = {
+      width: 1,
+      height: 40,
+      color: '#ffa54f'
+    }
+
+    const bomb = {
+      width: 5,
+      height: 10,
+      color: '#880606'
+    }
+
+    const hatFactor = 3
+
+    stick.x = x
+    stick.y = y
+
+    rocket.rect(stick.width, settings.stickHeight)
+        .attr({ fill: stick.color })
+        .move(stick.x, stick.y)
+
+    bomb.x = stick.x - (bomb.width / 2)
+    bomb.y = svg.node.clientHeight - settings.stickHeight
+
+    rocket.rect(bomb.width, bomb.height)
+        .attr({ fill: bomb.color })
+        .move(bomb.x, bomb.y)
+
+    rocket.polygon(`${bomb.x},${bomb.y} ${bomb.x + hatFactor},${bomb.y - hatFactor} ${bomb.x + (2 * hatFactor)},${bomb.y}`)
+        .attr({ fill: colors[(Math.floor(Math.random() * colors.length) + 1) - 1] })
+        .move(stick.x - hatFactor, svg.node.clientHeight - settings.stickHeight - hatFactor)
+
+    return rocket
+  }
+
+  startExplosion(svg, rocket) {
+
+    const explosion = svg.group()
+    const circleCount = settings.circleCount
+    const color = colors[(Math.floor(Math.random() * colors.length) + 1) - 1]
+    const x = rocket.x()
+    const y = rocket.y()
+
+    for (let i = 0; i < circleCount; i++) {
+      const circle = explosion.circle().radius(1)
+        .attr({fill: color})
+        .move(x, y)
+
+      const newX = x + 250 * Math.cos(360 / circleCount * i)
+      const newY = y + 250 * Math.sin(360 / circleCount * i)
+
+      const diffX = Math.floor(i % circleCount / 10 * (Math.cos(360 / (i % circleCount / 10))) * circleCount)
+      const diffY = Math.floor(i % circleCount / 10 * (Math.sin(360 / (i % circleCount / 10))) * circleCount)
+
+      circle.animate(settings.baseDuration, 0, "now").move(newX + diffX, newY + diffY)
+            .animate(settings.baseDuration / 4, 0, "now").attr({r: 20, opacity: 0})
+
+
+    }
+
+  }
+
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
+
+  h1 {
+    color: #ddd;
+    font-size: 5rem;
+  }
+
+  .fireworks {
+    position: absolute;
+    top: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    background: #222;
+    background: linear-gradient(to bottom, #020111 60%,#20202c 100%);
+  }
+
+  svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+  }
+
 </style>

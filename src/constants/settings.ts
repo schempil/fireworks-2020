@@ -1,17 +1,6 @@
-export default [
-	"#ef4f4f",
-	"#16c79a",
-	"#c0e218",
-	"#e5707e",
-	"#a3ddcb",
-	"#ffd66b",
-	"#6155a6",
-	"#583d72",
-	"#54e346",
-	"#fffaa4",
-	"#5aa469",
-	"#db6400",
-	"#ec5858",
-	"#e4e978",
-	"#892cdc",
-]
+export default {
+	rocketCount: 100,
+	stickHeight: 40,
+	baseDuration: 2000,
+	circleCount: 100
+}
