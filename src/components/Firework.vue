@@ -155,7 +155,7 @@ export default class Firework extends Vue {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 100%;
     width: 100vw;
     background: #222;
   }
@@ -189,8 +189,8 @@ export default class Firework extends Vue {
     position: absolute;
     top: 0;
     left: 0;
-    height: 100vh;
-    width: 100vw;
+    height: 100%;
+    width: 100%;
   }
 
 </style>
