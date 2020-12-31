@@ -23,7 +23,6 @@ export default class Firework extends Vue {
     for (let i = 0; i < settings.rocketCount; i++) {
       const x = Math.floor(Math.random() * svg.node.clientWidth) + 1
       const y = svg.node.clientHeight - settings.stickHeight
-
       rockets.push(this.createRocket(svg, x, y))
     }
 
@@ -39,7 +38,7 @@ export default class Firework extends Vue {
 
   startExplosions(svg, rockets) {
     rockets.forEach((rocket, i) => {
-      const delay = settings.baseDuration / 10 * i
+      const delay = settings.baseDuration / 10 * i * (Math.floor(Math.random() * 2) + 1)
       this.doRocketExplosion(svg, rocket, settings.baseDuration, delay)
     })
   }
@@ -120,8 +119,7 @@ export default class Firework extends Vue {
       const diffY = Math.floor(i % circleCount / 10 * (Math.sin(360 / (i % circleCount / 10))) * circleCount)
 
       circle.animate(settings.baseDuration, 0, "now").move(newX + diffX, newY + diffY)
-            .animate(settings.baseDuration / 4, 0, "now").attr({r: 20, opacity: 0})
-
+            .animate(settings.baseDuration / 4, 0, "now").attr({r: 10, opacity: 0})
 
     }
 
