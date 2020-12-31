@@ -123,6 +123,10 @@ export default class Firework extends Vue {
 
     }
 
+    setTimeout(() => {
+      explosion.remove()
+    }, settings.baseDuration / 4)
+
   }
 
 }
