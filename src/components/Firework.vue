@@ -1,7 +1,13 @@
 <template>
-  <div class="fireworks" :class="getSkyGradient()">
+  <div class="fireworks" :class="this.gradient">
     <h1>New Year's Eve 2020</h1>
+    <span class="time">
+      {{ pad(currentDate.getHours(), 2) }}:{{ pad(currentDate.getMinutes(), 2) }}:{{ pad(currentDate.getSeconds(), 2) }}
+    </span>
+    <span class="timezone">{{ Intl.DateTimeFormat().resolvedOptions().timeZone }}</span>
     <svg id="fireworks-svg" @click="clickSvg"/>
+    <span class="fire-button" v-if="rockets.length > 0" @click="startExplosions">FIRE!</span>
+    <span class="fire-button" v-if="rockets.length < 1" @click="loadRockets">RELOAD!</span>
   </div>
 </template>
 
@@ -14,20 +20,35 @@ import settings from "@/constants/settings";
 @Component
 export default class Firework extends Vue {
 
+  currentDate = new Date()
+  rockets = []
+  svg = null
+  gradient = this.getSkyGradient()
+  explosionStarted = false
+
   mounted() {
+    this.svg = SVG("#fireworks-svg")
+    this.updateTime()
+    this.loadRockets()
+  }
 
-    const svg = SVG("#fireworks-svg")
-
-    const rockets = []
-
+  loadRockets() {
     for (let i = 0; i < settings.rocketCount; i++) {
-      const x = Math.floor(Math.random() * svg.node.clientWidth) + 1
-      const y = svg.node.clientHeight - settings.stickHeight
-      rockets.push(this.createRocket(svg, x, y))
+      this.rockets.push(this.createRandomRocket())
+    }
+  }
+
+  updateTime() {
+    this.currentDate = new Date()
+
+    if (this.currentDate.getFullYear() >= settings.newYear && !this.explosionStarted) {
+      this.explosionStarted = true
+      this.startExplosions()
     }
 
-    this.startExplosions(svg, rockets)
+    this.gradient = this.getSkyGradient()
 
+    setTimeout(this.updateTime, 1000)
   }
 
   getSkyGradient() {
@@ -41,19 +62,20 @@ export default class Firework extends Vue {
   }
 
   clickSvg(e) {
-    const svg = SVG("#fireworks-svg")
-    const rocket = this.createRocket(svg, e.clientX, svg.node.clientHeight - settings.stickHeight)
-    this.doRocketExplosion(svg, rocket, settings.baseDuration, 200)
+    const rocket = this.createRocket(e.clientX, this.svg.node.clientHeight - settings.stickHeight)
+    this.doRocketExplosion(rocket, settings.baseDuration, 200)
   }
 
-  startExplosions(svg, rockets) {
-    rockets.forEach((rocket, i) => {
-      const delay = settings.baseDuration / 10 * i * (Math.floor(Math.random() * 2) + 1)
-      this.doRocketExplosion(svg, rocket, settings.baseDuration, delay)
+  startExplosions() {
+    this.rockets.forEach((rocket, i) => {
+      const delay = settings.baseDuration / 20 * i * (Math.floor(Math.random() * 2) + 1)
+      this.doRocketExplosion(rocket, settings.baseDuration, delay)
     })
+
+    this.rockets = []
   }
 
-  doRocketExplosion(svg, rocket, duration, delay) {
+  doRocketExplosion(rocket, duration, delay) {
 
     const targetY = Math.floor(Math.random() * 200) + 1
 
@@ -65,14 +87,14 @@ export default class Firework extends Vue {
     }).move(rocket.x(), 100 + targetY)
 
     setTimeout(() => {
-      this.startExplosion(svg, rocket)
+      this.startExplosion(this.svg, rocket)
       rocket.remove()
     }, duration + delay)
   }
 
-  createRocket(svg, x, y) {
+  createRocket(x, y) {
 
-    const rocket = svg.group()
+    const rocket = this.svg.group()
 
     const stick = {
       width: 1,
@@ -96,7 +118,7 @@ export default class Firework extends Vue {
         .move(stick.x, stick.y)
 
     bomb.x = stick.x - (bomb.width / 2)
-    bomb.y = svg.node.clientHeight - settings.stickHeight
+    bomb.y = this.svg.node.clientHeight - settings.stickHeight
 
     rocket.rect(bomb.width, bomb.height)
         .attr({ fill: bomb.color })
@@ -104,9 +126,15 @@ export default class Firework extends Vue {
 
     rocket.polygon(`${bomb.x},${bomb.y} ${bomb.x + hatFactor},${bomb.y - hatFactor} ${bomb.x + (2 * hatFactor)},${bomb.y}`)
         .attr({ fill: colors[(Math.floor(Math.random() * colors.length) + 1) - 1] })
-        .move(stick.x - hatFactor, svg.node.clientHeight - settings.stickHeight - hatFactor)
+        .move(stick.x - hatFactor, this.svg.node.clientHeight - settings.stickHeight - hatFactor)
 
     return rocket
+  }
+
+  createRandomRocket() {
+    const x = Math.floor(Math.random() * this.svg.node.clientWidth) + 1
+    const y = this.svg.node.clientHeight - settings.stickHeight
+    return this.createRocket(x, y)
   }
 
   startExplosion(svg, rocket) {
@@ -139,6 +167,12 @@ export default class Firework extends Vue {
 
   }
 
+  pad(num, size) {
+    num = num.toString();
+    while (num.length < size) num = "0" + num;
+    return num;
+  }
+
 }
 </script>
 
@@ -146,15 +180,14 @@ export default class Firework extends Vue {
 
   h1 {
     color: #ddd;
-    font-size: 5rem;
+    font-size: 4rem;
   }
 
   .fireworks {
     position: absolute;
     top: 0;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
     height: 100%;
     width: 100vw;
     background: #222;
@@ -191,6 +224,38 @@ export default class Firework extends Vue {
     left: 0;
     height: 100%;
     width: 100%;
+  }
+
+  .time {
+    color: #fff;
+    font-weight: 100;
+    font-size: 2rem;
+  }
+
+  .timezone {
+    color: #aaa;
+    font-weight: 100;
+    font-size: 1rem;
+  }
+
+  .fire-button {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    border: 1px solid #fff;
+    padding: 20px;
+    border-radius: 43px;
+    margin: 20px;
+    color: #fff;
+    font-weight: 700;
+    min-width: 75px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 250ms ease;
+  }
+
+  .fire-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
   }
 
 </style>
