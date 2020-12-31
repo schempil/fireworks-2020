@@ -27,18 +27,21 @@ export default class Firework extends Vue {
   explosionStarted = false
 
   mounted() {
+
     this.svg = SVG("#fireworks-svg")
     this.updateTime()
     this.loadRockets()
   }
 
   loadRockets() {
+
     for (let i = 0; i < settings.rocketCount; i++) {
       this.rockets.push(this.createRandomRocket())
     }
   }
 
   updateTime() {
+
     this.currentDate = new Date()
 
     if (this.currentDate.getFullYear() >= settings.newYear && !this.explosionStarted) {
@@ -52,6 +55,7 @@ export default class Firework extends Vue {
   }
 
   getSkyGradient() {
+
     const hours = new Date().getHours()
 
     if (hours > 21 || hours < 6) {
@@ -132,8 +136,10 @@ export default class Firework extends Vue {
   }
 
   createRandomRocket() {
+
     const x = Math.floor(Math.random() * this.svg.node.clientWidth) + 1
     const y = this.svg.node.clientHeight - settings.stickHeight
+
     return this.createRocket(x, y)
   }
 
@@ -164,12 +170,13 @@ export default class Firework extends Vue {
     setTimeout(() => {
       explosion.remove()
     }, settings.baseDuration / 4)
-
   }
 
   pad(num, size) {
+
     num = num.toString();
     while (num.length < size) num = "0" + num;
+
     return num;
   }
 
